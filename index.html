@@ -94,7 +94,7 @@
               </tr>
             </thead>
             <tbody id="vehicleTableBody" class="divide-y divide-stone-200 text-sm">
-              <tr><td colspan="4" class="p-8 text-center text-stone-500">Veriler yükleniyor...</td></tr>
+              <tr><td colspan="4" class="p-8 text-center text-stone-500"><i class="fa-solid fa-spinner animate-spin"></i> Veritabanına bağlanılıyor...</td></tr>
             </tbody>
           </table>
         </div>
@@ -104,4 +104,173 @@
   </div>
 
   <script type="module">
-    import
+    // Firebase 10.8.0 sürümü (Vercel ve tarayıcılarla %100 uyumlu stabil sürüm)
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, collection, addDoc, getDocs, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    // --- 1. FIREBASE AYARLARI ---
+    const firebaseConfig = {
+      apiKey: "AIzaSyBF0bchfUsw4yo1q1wU-rowR8RZ24CDgJ0",
+      authDomain: "mete-73d7c.firebaseapp.com",
+      projectId: "mete-73d7c",
+      storageBucket: "mete-73d7c.firebasestorage.app",
+      messagingSenderId: "785562796791",
+      appId: "1:785562796791:web:4ee9767daf4a13a981c9f2",
+      measurementId: "G-191XRBGG83"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // --- 2. ULTRAMSG API AYARLARI ---
+    const ULTRAMSG_INSTANCE_ID = "instance184322"; 
+    const ULTRAMSG_TOKEN = "r61y4pgaeu93vu7p"; 
+
+    async function sendWhatsApp(phone, message) {
+      if (!phone) return;
+      
+      const formattedPhone = phone.replace(/\D/g, ''); 
+      const url = `https://api.ultramsg.com/${ULTRAMSG_INSTANCE_ID}/messages/chat`;
+      
+      const data = new URLSearchParams();
+      data.append("token", ULTRAMSG_TOKEN);
+      data.append("to", `+${formattedPhone}`);
+      data.append("body", message);
+
+      try {
+        const response = await fetch(url, { 
+          method: 'POST', 
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+          },
+          body: data 
+        });
+        
+        const yanit = await response.json();
+        console.log(`Ultramsg Yanıtı (${formattedPhone}):`, yanit);
+        
+      } catch (error) {
+        console.error("Ultramsg Bağlantı Hatası:", error);
+      }
+    }
+
+    // --- 3. TARİH HESAPLAMA ---
+    function checkDaysLeft(dateStr) {
+      const today = new Date();
+      today.setHours(0,0,0,0);
+      const target = new Date(dateStr);
+      target.setHours(0,0,0,0);
+      return Math.ceil((target - today) / (1000 * 60 * 60 * 24));
+    }
+
+    // --- 4. ARAÇ KAYIT ---
+    document.getElementById('vehicleForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      try {
+        await addDoc(collection(db, "araclar"), {
+          sorumluAdi: document.getElementById('sorumluAdi').value.trim(),
+          plaka: document.getElementById('plaka').value.trim().toUpperCase(),
+          telefon1: document.getElementById('telefon1').value.trim(),
+          telefon2: document.getElementById('telefon2').value.trim(),
+          muayeneTarihi: document.getElementById('muayene').value,
+          sigortaTarihi: document.getElementById('sigorta').value,
+          bakimTarihi: document.getElementById('bakim').value
+        });
+        alert("Araç Taşdoğan Unlu Mamulleri filosuna başarıyla eklendi!");
+        e.target.reset();
+      } catch (error) {
+        alert("Kayıt sırasında bir hata oluştu! Lütfen sayfayı yenileyip tekrar deneyin.");
+        console.error("Kayıt Hatası: ", error);
+      }
+    });
+
+    // --- 5. WHATSAPP BİLDİRİMİ ---
+    document.getElementById('checkAndSendBtn').addEventListener('click', async () => {
+      const btn = document.getElementById('checkAndSendBtn');
+      btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> Kontroller Yapılıyor...`;
+      btn.disabled = true;
+
+      try {
+        const snapshot = await getDocs(collection(db, "araclar"));
+        let gonderimSayisi = 0;
+
+        const saat = new Date().getHours();
+        let selamlama = "İyi günler";
+        if (saat >= 5 && saat < 12) selamlama = "Günaydın";
+        else if (saat >= 17 && saat < 22) selamlama = "İyi akşamlar";
+
+        for (const doc of snapshot.docs) {
+          const data = doc.data();
+          let islemler = [];
+          
+          const muayeneFark = checkDaysLeft(data.muayeneTarihi);
+          const sigortaFark = checkDaysLeft(data.sigortaTarihi);
+          const bakimFark = checkDaysLeft(data.bakimTarihi);
+
+          // Sadece 7 gün ve daha az kalanlar için tetiklenir
+          if (muayeneFark >= 0 && muayeneFark <= 7) islemler.push('Muayene');
+          if (sigortaFark >= 0 && sigortaFark <= 7) islemler.push('Sigorta');
+          if (bakimFark >= 0 && bakimFark <= 7) islemler.push('Bakım');
+
+          if (islemler.length > 0) {
+            const islemMetni = islemler.join(' / '); 
+            
+            const waMesaji = `🍞 *Taşdoğan Unlu Mamulleri - Filo Uyarısı*\n\n${selamlama} Sayın ${data.sorumluAdi},\n\nDağıtım operasyonlarında aktif olarak görev alan *${data.plaka}* plakalı aracımızın *${islemMetni}* tarihi yaklaşmaktadır.\n\nGerekli planlamaların yapılması için muhasebe birimi Mete Bey ile iletişime geçiniz.\n\nİyi çalışmalar dileriz.`;
+            
+            if(data.telefon1) await sendWhatsApp(data.telefon1, waMesaji);
+            if(data.telefon2) await sendWhatsApp(data.telefon2, waMesaji);
+            gonderimSayisi++;
+          }
+        }
+        
+        if (gonderimSayisi > 0) {
+          alert(`İşlem Tamamlandı! ${gonderimSayisi} aracın sorumlusuna WhatsApp üzerinden uyarı mesajı iletildi.`);
+        } else {
+          alert(`Uyarı gönderilecek araç bulunamadı. Lütfen işlem tarihine 7 gün veya daha az kalmış araçları kontrol edin.`);
+        }
+        
+      } catch (error) {
+        alert("Gönderim sırasında hata oluştu. İnternet bağlantınızı kontrol edip tekrar deneyin.");
+        console.error("Gönderim Butonu Hatası:", error);
+      } finally {
+        btn.innerHTML = `<i class="fa-brands fa-whatsapp text-xl"></i> Sürücüleri WhatsApp'tan Uyar`;
+        btn.disabled = false;
+      }
+    });
+
+    // --- 6. TABLO LİSTELEME ---
+    onSnapshot(collection(db, "araclar"), (snapshot) => {
+      const tbody = document.getElementById('vehicleTableBody');
+      let html = "";
+      
+      if(snapshot.empty) {
+        tbody.innerHTML = `<tr><td colspan="4" class="p-8 text-center text-stone-500">Filoya henüz araç eklenmedi. Sol taraftaki formu kullanarak ilk aracı ekleyebilirsiniz.</td></tr>`;
+        return;
+      }
+
+      snapshot.forEach(doc => {
+        const d = doc.data();
+        html += `
+          <tr class="hover:bg-amber-50/50 transition">
+            <td class="p-4 text-stone-700 font-semibold flex items-center gap-2">
+              <i class="fa-solid fa-user-tie text-stone-400 text-xs"></i> ${d.sorumluAdi}
+            </td>
+            <td class="p-4 font-mono font-bold text-amber-600">${d.plaka}</td>
+            <td class="p-4 text-xs space-y-1 text-stone-600">
+              <div class="flex justify-between w-28"><span class="font-bold text-stone-400">Muayene:</span> <span>${d.muayeneTarihi}</span></div>
+              <div class="flex justify-between w-28"><span class="font-bold text-stone-400">Sigorta:</span> <span>${d.sigortaTarihi}</span></div>
+              <div class="flex justify-between w-28"><span class="font-bold text-stone-400">Bakım:</span> <span>${d.bakimTarihi}</span></div>
+            </td>
+            <td class="p-4 text-xs text-stone-500 font-mono tracking-tighter">
+              ${d.telefon1} <br> ${d.telefon2 || '-'}
+            </td>
+          </tr>`;
+      });
+      tbody.innerHTML = html;
+    }, (error) => {
+        console.error("Firestore Dinleme Hatası:", error);
+        document.getElementById('vehicleTableBody').innerHTML = `<tr><td colspan="4" class="p-8 text-center text-red-500">Veritabanına bağlanılamadı. Lütfen Firebase kurallarını (Rules) kontrol edin.</td></tr>`;
+    });
+  </script>
+</body>
+</html>
