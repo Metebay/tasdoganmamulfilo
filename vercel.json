@@ -2,7 +2,7 @@
   "crons": [
     {
       "path": "/api/otomatik-mesaj",
-      "schedule": "45 18 * * *"
+      "schedule": "15 18 * * *"
     }
   ]
 }
