@@ -15,8 +15,9 @@
 
   <div class="max-w-7xl mx-auto space-y-8">
     
-    <div class="flex flex-col md:flex-row items-center justify-between bg-white p-6 rounded-2xl border border-stone-200 shadow-sm">
-      <div class="flex items-center gap-4">
+    <!-- Üst Bar ve Kurumsal Başlık -->
+    <div class="flex flex-col lg:flex-row items-center justify-between bg-white p-6 rounded-2xl border border-stone-200 shadow-sm">
+      <div class="flex items-center gap-4 mb-4 lg:mb-0">
         <div class="bg-amber-100 p-3 rounded-xl text-amber-600 text-2xl">
           <i class="fa-solid fa-wheat-awn"></i>
         </div>
@@ -26,75 +27,96 @@
         </div>
       </div>
       
-      <button id="checkAndSendBtn" class="mt-4 md:mt-0 bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-xl transition duration-300 shadow-lg shadow-green-600/30 flex items-center gap-2">
-        <i class="fa-brands fa-whatsapp text-xl"></i> Sürücüleri WhatsApp'tan Uyar
-      </button>
+      <!-- WhatsApp Tetikleme Butonları -->
+      <div class="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
+        <button id="sendListBtn" class="flex-1 lg:flex-none bg-stone-800 hover:bg-stone-900 text-white font-bold py-3 px-5 rounded-xl transition duration-300 shadow-lg shadow-stone-800/30 flex items-center justify-center gap-2">
+          <i class="fa-solid fa-list-check"></i> Toplu Listeyi Gönder
+        </button>
+        <button id="checkAndSendBtn" class="flex-1 lg:flex-none bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-5 rounded-xl transition duration-300 shadow-lg shadow-green-600/30 flex items-center justify-center gap-2">
+          <i class="fa-brands fa-whatsapp text-xl"></i> İlgili Kişileri Uyar
+        </button>
+      </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
       
-      <div class="bg-white p-6 rounded-2xl border border-stone-200 shadow-sm h-fit">
-        <h2 class="text-lg font-bold mb-5 text-stone-800 flex items-center gap-2">
+      <!-- Sol Sütun: Form (Ekleme / Düzenleme) -->
+      <div class="lg:col-span-4 bg-white p-6 rounded-2xl border border-stone-200 shadow-sm h-fit">
+        <h2 id="formTitle" class="text-lg font-bold mb-5 text-stone-800 flex items-center gap-2">
           <i class="fa-solid fa-truck-fast text-amber-500"></i> Yeni Araç Kaydı
         </h2>
         
         <form id="vehicleForm" class="space-y-4">
-          <div>
-            <label class="block text-xs font-bold uppercase tracking-wide text-stone-500 mb-1">Sürücü / Sorumlu Personel</label>
-            <input type="text" id="sorumluAdi" placeholder="Örn: Mehmet Usta" class="w-full bg-stone-50 border border-stone-300 rounded-xl p-3 text-stone-800 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 outline-none transition" required>
-          </div>
-          
+          <!-- Düzenleme için gizli ID -->
+          <input type="hidden" id="editId" value="">
+
           <div>
             <label class="block text-xs font-bold uppercase tracking-wide text-stone-500 mb-1">Araç Plakası</label>
             <input type="text" id="plaka" placeholder="27 ABC 123" class="w-full bg-stone-50 border border-stone-300 rounded-xl p-3 text-stone-800 uppercase focus:border-amber-500 focus:ring-1 focus:ring-amber-500 outline-none transition font-mono font-bold" required>
           </div>
+
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wide text-stone-500 mb-1">Araç Personeli (Ad Soyad)</label>
+            <input type="text" id="sorumluAdi" placeholder="Örn: Mehmet Usta" class="w-full bg-stone-50 border border-stone-300 rounded-xl p-3 text-stone-800 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 outline-none transition" required>
+          </div>
           
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <label class="block text-xs font-bold uppercase tracking-wide text-stone-500 mb-1">WhatsApp 1 (Sürücü)</label>
-              <input type="tel" id="telefon1" placeholder="905xxxxxxxxx" class="w-full bg-stone-50 border border-stone-300 rounded-xl p-3 text-stone-800 focus:border-amber-500 outline-none transition" required>
+              <label class="block text-[10px] font-bold uppercase tracking-wide text-stone-500 mb-1">Sürücü Tel</label>
+              <input type="tel" id="surucuTel" placeholder="905xxxxxxxxx" class="w-full bg-stone-50 border border-stone-300 rounded-xl p-2.5 text-sm text-stone-800 focus:border-amber-500 outline-none transition">
             </div>
             <div>
-              <label class="block text-xs font-bold uppercase tracking-wide text-stone-500 mb-1">WhatsApp 2 (Yönetici)</label>
-              <input type="tel" id="telefon2" placeholder="Opsiyonel" class="w-full bg-stone-50 border border-stone-300 rounded-xl p-3 text-stone-800 focus:border-amber-500 outline-none transition">
+              <label class="block text-[10px] font-bold uppercase tracking-wide text-stone-500 mb-1">Sorumlu Tel</label>
+              <input type="tel" id="sorumluTel" placeholder="905xxxxxxxxx" class="w-full bg-stone-50 border border-stone-300 rounded-xl p-2.5 text-sm text-stone-800 focus:border-amber-500 outline-none transition">
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold uppercase tracking-wide text-stone-500 mb-1">Yönetici Tel</label>
+              <input type="tel" id="yoneticiTel" placeholder="905xxxxxxxxx" class="w-full bg-stone-50 border border-stone-300 rounded-xl p-2.5 text-sm text-stone-800 focus:border-amber-500 outline-none transition">
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold uppercase tracking-wide text-stone-500 mb-1">Sigortacı Tel</label>
+              <input type="tel" id="sigortaciTel" placeholder="905xxxxxxxxx" class="w-full bg-stone-50 border border-stone-300 rounded-xl p-2.5 text-sm text-stone-800 focus:border-amber-500 outline-none transition">
             </div>
           </div>
           
-          <div class="pt-4 border-t border-stone-100 space-y-3">
+          <div class="pt-4 border-t border-stone-100 grid grid-cols-2 gap-4">
             <div>
-              <label class="block text-xs font-bold uppercase tracking-wide text-stone-500 mb-1">Muayene Bitiş</label>
-              <input type="date" id="muayene" class="w-full bg-stone-50 border border-stone-300 rounded-xl p-3 text-stone-800 focus:border-amber-500 outline-none" required>
+              <label class="block text-[10px] font-bold uppercase tracking-wide text-stone-500 mb-1">Muayene Bitiş</label>
+              <input type="date" id="muayene" class="w-full bg-stone-50 border border-stone-300 rounded-xl p-2.5 text-sm text-stone-800 focus:border-amber-500 outline-none" required>
             </div>
             <div>
-              <label class="block text-xs font-bold uppercase tracking-wide text-stone-500 mb-1">Sigorta Bitiş</label>
-              <input type="date" id="sigorta" class="w-full bg-stone-50 border border-stone-300 rounded-xl p-3 text-stone-800 focus:border-amber-500 outline-none" required>
-            </div>
-            <div>
-              <label class="block text-xs font-bold uppercase tracking-wide text-stone-500 mb-1">Bakım Zamanı</label>
-              <input type="date" id="bakim" class="w-full bg-stone-50 border border-stone-300 rounded-xl p-3 text-stone-800 focus:border-amber-500 outline-none" required>
+              <label class="block text-[10px] font-bold uppercase tracking-wide text-stone-500 mb-1">Sigorta Bitiş</label>
+              <input type="date" id="sigorta" class="w-full bg-stone-50 border border-stone-300 rounded-xl p-2.5 text-sm text-stone-800 focus:border-amber-500 outline-none" required>
             </div>
           </div>
           
-          <button type="submit" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-3 px-4 rounded-xl transition duration-200 mt-4 flex items-center justify-center gap-2">
-            <i class="fa-solid fa-floppy-disk"></i> Filoya Ekle
-          </button>
+          <div class="flex gap-2 mt-4">
+            <button type="button" id="cancelEditBtn" class="hidden w-1/3 bg-stone-300 hover:bg-stone-400 text-stone-800 font-bold py-3 px-4 rounded-xl transition duration-200 flex items-center justify-center">
+              İptal
+            </button>
+            <button type="submit" id="submitBtn" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-3 px-4 rounded-xl transition duration-200 flex items-center justify-center gap-2">
+              <i class="fa-solid fa-floppy-disk"></i> <span id="submitBtnText">Filoya Ekle</span>
+            </button>
+          </div>
         </form>
       </div>
 
-      <div class="lg:col-span-2 bg-white p-6 rounded-2xl border border-stone-200 shadow-sm">
+      <!-- Sağ Sütun: Araç Listesi -->
+      <div class="lg:col-span-8 bg-white p-6 rounded-2xl border border-stone-200 shadow-sm overflow-hidden">
         <h2 class="text-lg font-bold text-stone-800 mb-4">Aktif Dağıtım Araçları</h2>
         <div class="overflow-x-auto rounded-xl border border-stone-200">
-          <table class="w-full text-left border-collapse">
+          <table class="w-full text-left border-collapse whitespace-nowrap">
             <thead>
-              <tr class="bg-stone-100 text-stone-600 text-xs uppercase font-bold">
-                <th class="p-4">Sürücü / Sorumlu</th>
-                <th class="p-4">Plaka</th>
-                <th class="p-4">Tarihler (M/S/B)</th>
-                <th class="p-4">İletişim</th>
+              <tr class="bg-stone-100 text-stone-600 text-[10px] uppercase font-bold">
+                <th class="p-4">Plaka / Personel</th>
+                <th class="p-4">Muayene</th>
+                <th class="p-4">Sigorta</th>
+                <th class="p-4">İletişim Numaraları</th>
+                <th class="p-4 text-center">İşlemler</th>
               </tr>
             </thead>
             <tbody id="vehicleTableBody" class="divide-y divide-stone-200 text-sm">
-              <tr><td colspan="4" class="p-8 text-center text-stone-500"><i class="fa-solid fa-spinner animate-spin"></i> Veritabanına bağlanılıyor...</td></tr>
+              <tr><td colspan="5" class="p-8 text-center text-stone-500"><i class="fa-solid fa-spinner animate-spin"></i> Veritabanına bağlanılıyor...</td></tr>
             </tbody>
           </table>
         </div>
@@ -104,9 +126,8 @@
   </div>
 
   <script type="module">
-    // Firebase 10.8.0 sürümü (Vercel ve tarayıcılarla %100 uyumlu stabil sürüm)
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, getDocs, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, getDocs, onSnapshot, doc, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     // --- 1. FIREBASE AYARLARI ---
     const firebaseConfig = {
@@ -122,35 +143,25 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
+    window.vehiclesData = []; 
+
     // --- 2. ULTRAMSG API AYARLARI ---
     const ULTRAMSG_INSTANCE_ID = "instance184322"; 
     const ULTRAMSG_TOKEN = "r61y4pgaeu93vu7p"; 
 
     async function sendWhatsApp(phone, message) {
       if (!phone) return;
-      
       const formattedPhone = phone.replace(/\D/g, ''); 
       const url = `https://api.ultramsg.com/${ULTRAMSG_INSTANCE_ID}/messages/chat`;
-      
       const data = new URLSearchParams();
       data.append("token", ULTRAMSG_TOKEN);
       data.append("to", `+${formattedPhone}`);
       data.append("body", message);
 
       try {
-        const response = await fetch(url, { 
-          method: 'POST', 
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded'
-          },
-          body: data 
-        });
-        
-        const yanit = await response.json();
-        console.log(`Ultramsg Yanıtı (${formattedPhone}):`, yanit);
-        
+        await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: data });
       } catch (error) {
-        console.error("Ultramsg Bağlantı Hatası:", error);
+        console.error("WhatsApp Gönderim Hatası:", error);
       }
     }
 
@@ -163,30 +174,151 @@
       return Math.ceil((target - today) / (1000 * 60 * 60 * 24));
     }
 
-    // --- 4. ARAÇ KAYIT ---
+    // --- 4. ARAÇ EKLEME / GÜNCELLEME FORMU (Hoş Geldin Mesajlı) ---
     document.getElementById('vehicleForm').addEventListener('submit', async (e) => {
       e.preventDefault();
+      
+      const editId = document.getElementById('editId').value;
+      const vehicleData = {
+        plaka: document.getElementById('plaka').value.trim().toUpperCase(),
+        sorumluAdi: document.getElementById('sorumluAdi').value.trim(),
+        surucuTel: document.getElementById('surucuTel').value.trim(),
+        sorumluTel: document.getElementById('sorumluTel').value.trim(),
+        yoneticiTel: document.getElementById('yoneticiTel').value.trim(),
+        sigortaciTel: document.getElementById('sigortaciTel').value.trim(),
+        muayeneTarihi: document.getElementById('muayene').value,
+        sigortaTarihi: document.getElementById('sigorta').value
+      };
+
       try {
-        await addDoc(collection(db, "araclar"), {
-          sorumluAdi: document.getElementById('sorumluAdi').value.trim(),
-          plaka: document.getElementById('plaka').value.trim().toUpperCase(),
-          telefon1: document.getElementById('telefon1').value.trim(),
-          telefon2: document.getElementById('telefon2').value.trim(),
-          muayeneTarihi: document.getElementById('muayene').value,
-          sigortaTarihi: document.getElementById('sigorta').value,
-          bakimTarihi: document.getElementById('bakim').value
-        });
-        alert("Araç Taşdoğan Unlu Mamulleri filosuna başarıyla eklendi!");
-        e.target.reset();
+        const btn = document.getElementById('submitBtn');
+        const originalText = document.getElementById('submitBtnText').innerText;
+        btn.disabled = true;
+        document.getElementById('submitBtnText').innerText = "İşleniyor...";
+
+        if (editId) {
+          // Güncelleme Modu (Mesaj Gitmez)
+          await updateDoc(doc(db, "araclar", editId), vehicleData);
+          alert("Araç bilgileri başarıyla güncellendi!");
+          resetForm();
+        } else {
+          // Yeni Ekleme Modu (Otomatik Hoş Geldin Mesajı Gider)
+          await addDoc(collection(db, "araclar"), vehicleData);
+          
+          const hosgeldinMesaji = `🍞 *Taşdoğan Unlu Mamulleri - Filo Takip Sistemi*\n\nMerhaba Sayın ${vehicleData.sorumluAdi},\nKullandığınız *${vehicleData.plaka}* plakalı araç, şirketimizin sistemine başarıyla kaydedilmiştir.\n\nℹ️ *Bu mesaj otomatik bir bilgilendirmedir.*\nAmacımız: Aracınızın muayene ve sigorta tarihlerini dijital ortamda takip ederek, süreleri dolmadan önce sizlere ve yöneticilere zamanında hatırlatmalar yapmaktır.\n\nGüvenli sürüşler, iyi çalışmalar dileriz.\n`;
+
+          // Aynı numara iki yere de yazılmışsa çifte mesaj gitmemesi için kontrol
+          let gonderilenNumaralar = [];
+          
+          if(vehicleData.surucuTel) {
+            await sendWhatsApp(vehicleData.surucuTel, hosgeldinMesaji);
+            gonderilenNumaralar.push(vehicleData.surucuTel);
+          }
+          
+          if(vehicleData.sorumluTel && !gonderilenNumaralar.includes(vehicleData.sorumluTel)) {
+            await sendWhatsApp(vehicleData.sorumluTel, hosgeldinMesaji);
+          }
+
+          alert("Yeni araç filoya eklendi ve personellere otomatik bilgilendirme mesajı iletildi!");
+          document.getElementById('vehicleForm').reset();
+        }
+
+        btn.disabled = false;
+        document.getElementById('submitBtnText').innerText = originalText;
+        
       } catch (error) {
-        alert("Kayıt sırasında bir hata oluştu! Lütfen sayfayı yenileyip tekrar deneyin.");
-        console.error("Kayıt Hatası: ", error);
+        alert("İşlem sırasında bir hata oluştu.");
+        document.getElementById('submitBtn').disabled = false;
+        document.getElementById('submitBtnText').innerText = "Filoya Ekle";
       }
     });
 
-    // --- 5. WHATSAPP BİLDİRİMİ ---
+    // --- FORM SIFIRLAMA / İPTAL ---
+    function resetForm() {
+      document.getElementById('vehicleForm').reset();
+      document.getElementById('editId').value = "";
+      document.getElementById('formTitle').innerHTML = `<i class="fa-solid fa-truck-fast text-amber-500"></i> Yeni Araç Kaydı`;
+      document.getElementById('submitBtnText').innerText = "Filoya Ekle";
+      document.getElementById('cancelEditBtn').classList.add('hidden');
+      document.getElementById('submitBtn').classList.remove('w-2/3');
+      document.getElementById('submitBtn').classList.add('w-full');
+    }
+
+    document.getElementById('cancelEditBtn').addEventListener('click', resetForm);
+
+    // --- DÜZENLEME BUTONUNA BASILINCA (Global Window Fonksiyonu) ---
+    window.editVehicle = (id) => {
+      const vehicle = window.vehiclesData.find(v => v.id === id);
+      if(!vehicle) return;
+
+      document.getElementById('editId').value = vehicle.id;
+      document.getElementById('plaka').value = vehicle.plaka;
+      document.getElementById('sorumluAdi').value = vehicle.sorumluAdi;
+      document.getElementById('surucuTel').value = vehicle.surucuTel || "";
+      document.getElementById('sorumluTel').value = vehicle.sorumluTel || "";
+      document.getElementById('yoneticiTel').value = vehicle.yoneticiTel || "";
+      document.getElementById('sigortaciTel').value = vehicle.sigortaciTel || "";
+      document.getElementById('muayene').value = vehicle.muayeneTarihi;
+      document.getElementById('sigorta').value = vehicle.sigortaTarihi;
+
+      document.getElementById('formTitle').innerHTML = `<i class="fa-solid fa-pen-to-square text-blue-500"></i> Aracı Düzenle`;
+      document.getElementById('submitBtnText').innerText = "Değişiklikleri Kaydet";
+      
+      document.getElementById('cancelEditBtn').classList.remove('hidden');
+      document.getElementById('submitBtn').classList.remove('w-full');
+      document.getElementById('submitBtn').classList.add('w-2/3');
+    };
+
+    // --- SİLME BUTONUNA BASILINCA (Global Window Fonksiyonu) ---
+    window.deleteVehicle = async (id) => {
+      const vehicle = window.vehiclesData.find(v => v.id === id);
+      if(confirm(`${vehicle.plaka} plakalı aracı filodan TAMAMEN SİLMEK istediğinize emin misiniz?`)) {
+        try {
+          await deleteDoc(doc(db, "araclar", id));
+          if(document.getElementById('editId').value === id) resetForm();
+        } catch (error) {
+          alert("Silme işlemi başarısız oldu.");
+        }
+      }
+    };
+
+    // --- 5. TOPLU LİSTE GÖNDERME ---
+    document.getElementById('sendListBtn').addEventListener('click', async () => {
+      const adminPhone = prompt("Tüm filo durumunun gönderileceği WhatsApp numarasını girin (Başında + olmadan, Örn: 905xxxxxxxxx):");
+      if (!adminPhone) return;
+
+      const btn = document.getElementById('sendListBtn');
+      const originalHtml = btn.innerHTML;
+      btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> Gönderiliyor...`;
+      btn.disabled = true;
+
+      try {
+        const snapshot = await getDocs(collection(db, "araclar"));
+        if (snapshot.empty) { alert("Filoda kayıtlı araç bulunmuyor."); return; }
+
+        let listeMesaji = `📋 *Taşdoğan Unlu Mamulleri - Güncel Filo Durumu*\n\n`;
+        snapshot.forEach(doc => {
+          const d = doc.data();
+          listeMesaji += `🚗 *${d.plaka}* (${d.sorumluAdi})\n`;
+          listeMesaji += `• Muayene: ${d.muayeneTarihi}\n`;
+          listeMesaji += `• Sigorta: ${d.sigortaTarihi}\n\n`;
+        });
+        listeMesaji += `_Sistem üzerinden otomatik olarak oluşturulmuştur._`;
+
+        await sendWhatsApp(adminPhone, listeMesaji);
+        alert(`Liste ${adminPhone} numarasına başarıyla iletildi!`);
+      } catch (error) {
+        alert("Toplu liste gönderilirken hata oluştu.");
+      } finally {
+        btn.innerHTML = originalHtml;
+        btn.disabled = false;
+      }
+    });
+
+    // --- 6. AKILLI BİLDİRİM SİSTEMİ (Role Göre Özel Mesaj) ---
     document.getElementById('checkAndSendBtn').addEventListener('click', async () => {
       const btn = document.getElementById('checkAndSendBtn');
+      const originalHtml = btn.innerHTML;
       btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> Kontroller Yapılıyor...`;
       btn.disabled = true;
 
@@ -194,82 +326,100 @@
         const snapshot = await getDocs(collection(db, "araclar"));
         let gonderimSayisi = 0;
 
-        const saat = new Date().getHours();
-        let selamlama = "İyi günler";
-        if (saat >= 5 && saat < 12) selamlama = "Günaydın";
-        else if (saat >= 17 && saat < 22) selamlama = "İyi akşamlar";
-
         for (const doc of snapshot.docs) {
           const data = doc.data();
-          let islemler = [];
+          let standartIslemler = [];
           
           const muayeneFark = checkDaysLeft(data.muayeneTarihi);
           const sigortaFark = checkDaysLeft(data.sigortaTarihi);
-          const bakimFark = checkDaysLeft(data.bakimTarihi);
 
-          // Sadece 7 gün ve daha az kalanlar için tetiklenir
-          if (muayeneFark >= 0 && muayeneFark <= 7) islemler.push('Muayene');
-          if (sigortaFark >= 0 && sigortaFark <= 7) islemler.push('Sigorta');
-          if (bakimFark >= 0 && bakimFark <= 7) islemler.push('Bakım');
+          if (muayeneFark >= 0 && muayeneFark <= 7) standartIslemler.push('Muayene');
+          if (sigortaFark >= 0 && sigortaFark <= 7) standartIslemler.push('Sigorta');
 
-          if (islemler.length > 0) {
-            const islemMetni = islemler.join(' / '); 
+          // 1. SÜRÜCÜ, SORUMLU, YÖNETİCİ BİLDİRİMLERİ
+          if (standartIslemler.length > 0) {
+            const islemMetni = standartIslemler.join(' / '); 
+            const standartMesaj = `🍞 *Taşdoğan Unlu Mamulleri - Filo Uyarısı*\n\nSayın ${data.sorumluAdi},\n\nFilomuza bağlı *${data.plaka}* plakalı aracımızın *${islemMetni}* tarihi yaklaşmaktadır.\n\nGerekli planlamaların yapılması için muhasebe birimi Mete Bey ile iletişime geçiniz.\n\nİyi çalışmalar dileriz.`;
             
-            const waMesaji = `🍞 *Taşdoğan Unlu Mamulleri - Filo Uyarısı*\n\n${selamlama} Sayın ${data.sorumluAdi},\n\nDağıtım operasyonlarında aktif olarak görev alan *${data.plaka}* plakalı aracımızın *${islemMetni}* tarihi yaklaşmaktadır.\n\nGerekli planlamaların yapılması için muhasebe birimi Mete Bey ile iletişime geçiniz.\n\nİyi çalışmalar dileriz.`;
+            // Çifte mesaj gitmemesi için numaraları kontrol et
+            let gonderilenler = [];
             
-            if(data.telefon1) await sendWhatsApp(data.telefon1, waMesaji);
-            if(data.telefon2) await sendWhatsApp(data.telefon2, waMesaji);
+            if(data.surucuTel) { await sendWhatsApp(data.surucuTel, standartMesaj); gonderilenler.push(data.surucuTel); }
+            if(data.sorumluTel && !gonderilenler.includes(data.sorumluTel)) { await sendWhatsApp(data.sorumluTel, standartMesaj); gonderilenler.push(data.sorumluTel); }
+            if(data.yoneticiTel && !gonderilenler.includes(data.yoneticiTel)) { await sendWhatsApp(data.yoneticiTel, standartMesaj); }
+            
             gonderimSayisi++;
+          }
+
+          // 2. SİGORTACI BİLDİRİMİ (Sadece Sigorta Yaklaştıysa Gider)
+          if (sigortaFark >= 0 && sigortaFark <= 7 && data.sigortaciTel) {
+            const sigortaMesaji = `🛡️ *Taşdoğan Unlu Mamulleri - Poliçe Yenileme Talebi*\n\nİyi çalışmalar,\n\nFilomuza kayıtlı *${data.plaka}* plakalı aracımızın trafik sigortası bitiş tarihi yaklaşmaktadır (Tarih: ${data.sigortaTarihi}).\n\nPoliçe yenileme işlemleri ve fiyatlandırma onayı için muhasebe biriminden Mete Bey ile iletişime geçmenizi rica ederiz.`;
+            await sendWhatsApp(data.sigortaciTel, sigortaMesaji);
           }
         }
         
         if (gonderimSayisi > 0) {
-          alert(`İşlem Tamamlandı! ${gonderimSayisi} aracın sorumlusuna WhatsApp üzerinden uyarı mesajı iletildi.`);
+          alert("İşlem Tamamlandı! Süresi yaklaşan araçlar için ilgili tüm rollere WhatsApp mesajları iletildi.");
         } else {
-          alert(`Uyarı gönderilecek araç bulunamadı. Lütfen işlem tarihine 7 gün veya daha az kalmış araçları kontrol edin.`);
+          alert("Uyarı gönderilecek araç bulunamadı (Tarihi son 7 gün içinde olan araç yok).");
         }
         
       } catch (error) {
-        alert("Gönderim sırasında hata oluştu. İnternet bağlantınızı kontrol edip tekrar deneyin.");
-        console.error("Gönderim Butonu Hatası:", error);
+        alert("Gönderim sırasında hata oluştu.");
       } finally {
-        btn.innerHTML = `<i class="fa-brands fa-whatsapp text-xl"></i> Sürücüleri WhatsApp'tan Uyar`;
+        btn.innerHTML = originalHtml;
         btn.disabled = false;
       }
     });
 
-    // --- 6. TABLO LİSTELEME ---
+    // --- 7. TABLO LİSTELEME VE DİNAMİK YÜKLEME ---
     onSnapshot(collection(db, "araclar"), (snapshot) => {
       const tbody = document.getElementById('vehicleTableBody');
       let html = "";
       
+      window.vehiclesData = snapshot.docs.map(d => ({id: d.id, ...d.data()}));
+      
       if(snapshot.empty) {
-        tbody.innerHTML = `<tr><td colspan="4" class="p-8 text-center text-stone-500">Filoya henüz araç eklenmedi. Sol taraftaki formu kullanarak ilk aracı ekleyebilirsiniz.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-stone-500">Filoya henüz araç eklenmedi.</td></tr>`;
         return;
       }
 
-      snapshot.forEach(doc => {
-        const d = doc.data();
+      snapshot.forEach(docSnap => {
+        const d = docSnap.data();
+        const id = docSnap.id;
+
+        const sTel = d.surucuTel ? `<a href="tel:${d.surucuTel}" class="text-blue-500 hover:underline">${d.surucuTel}</a>` : '-';
+        const sorTel = d.sorumluTel ? `<a href="tel:${d.sorumluTel}" class="text-blue-500 hover:underline">${d.sorumluTel}</a>` : '-';
+        const yTel = d.yoneticiTel ? `<a href="tel:${d.yoneticiTel}" class="text-blue-500 hover:underline">${d.yoneticiTel}</a>` : '-';
+        const sigTel = d.sigortaciTel ? `<a href="tel:${d.sigortaciTel}" class="text-blue-500 hover:underline">${d.sigortaciTel}</a>` : '-';
+
         html += `
           <tr class="hover:bg-amber-50/50 transition">
-            <td class="p-4 text-stone-700 font-semibold flex items-center gap-2">
-              <i class="fa-solid fa-user-tie text-stone-400 text-xs"></i> ${d.sorumluAdi}
+            <td class="p-4">
+              <div class="font-mono font-bold text-amber-600 text-base">${d.plaka}</div>
+              <div class="text-xs text-stone-500 flex items-center gap-1 mt-1"><i class="fa-solid fa-user"></i> ${d.sorumluAdi}</div>
             </td>
-            <td class="p-4 font-mono font-bold text-amber-600">${d.plaka}</td>
-            <td class="p-4 text-xs space-y-1 text-stone-600">
-              <div class="flex justify-between w-28"><span class="font-bold text-stone-400">Muayene:</span> <span>${d.muayeneTarihi}</span></div>
-              <div class="flex justify-between w-28"><span class="font-bold text-stone-400">Sigorta:</span> <span>${d.sigortaTarihi}</span></div>
-              <div class="flex justify-between w-28"><span class="font-bold text-stone-400">Bakım:</span> <span>${d.bakimTarihi}</span></div>
+            <td class="p-4 text-sm font-medium text-stone-700">${d.muayeneTarihi}</td>
+            <td class="p-4 text-sm font-medium text-stone-700">${d.sigortaTarihi}</td>
+            <td class="p-4 text-[11px] text-stone-500 tracking-tighter leading-tight space-y-1">
+              <div><span class="font-bold">Sürücü:</span> ${sTel}</div>
+              <div><span class="font-bold">Sorumlu:</span> ${sorTel}</div>
+              <div><span class="font-bold">Yönetici:</span> ${yTel}</div>
+              <div><span class="font-bold">Sigortacı:</span> ${sigTel}</div>
             </td>
-            <td class="p-4 text-xs text-stone-500 font-mono tracking-tighter">
-              ${d.telefon1} <br> ${d.telefon2 || '-'}
+            <td class="p-4 text-center">
+              <div class="flex items-center justify-center gap-3">
+                <button onclick="editVehicle('${id}')" title="Düzenle" class="text-blue-500 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 p-2 rounded-lg transition">
+                  <i class="fa-solid fa-pen-to-square"></i>
+                </button>
+                <button onclick="deleteVehicle('${id}')" title="Sil" class="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 p-2 rounded-lg transition">
+                  <i class="fa-solid fa-trash"></i>
+                </button>
+              </div>
             </td>
           </tr>`;
       });
       tbody.innerHTML = html;
-    }, (error) => {
-        console.error("Firestore Dinleme Hatası:", error);
-        document.getElementById('vehicleTableBody').innerHTML = `<tr><td colspan="4" class="p-8 text-center text-red-500">Veritabanına bağlanılamadı. Lütfen Firebase kurallarını (Rules) kontrol edin.</td></tr>`;
     });
   </script>
 </body>
