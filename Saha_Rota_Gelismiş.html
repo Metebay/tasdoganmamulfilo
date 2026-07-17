@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Gelişmiş Saha Takip ve Rota Sistemi</title>
+    
+    <!-- Leaflet.js CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #e74c3c;
+            --success: #2ecc71;
+            --bg-color: #f4f6f8;
+            --card-bg: #ffffff;
+            --text-main: #333;
+            --text-light: #7f8c8d;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 0;
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        /* Harita Alanı */
+        #map {
+            height: 40vh; /* Ekranın üst %40'ı harita */
+            width: 100%;
+            z-index: 1;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        /* Üst Kontrol Paneli (Haritanın Üstünde Yüzen) */
+        .controls {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            font-size: 0.9rem;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .controls button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: background 0.2s;
+        }
+
+        .controls button:hover {
+            background: #1a252f;
+        }
+
+        .controls button.btn-sort {
+            background: #f39c12;
+        }
+        
+        .controls button.btn-route {
+            background: #9b59b6;
+        }
+
+        .controls .status {
+            text-align: center;
+            font-weight: bold;
+            color: var(--secondary);
+            margin-top: 5px;
+            font-size: 0.8rem;
+        }
+
+        /* Liste Alanı (Kaydırılabilir Alt Kısım) */
+        .list-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+            background: var(--bg-color);
+        }
+
+        .stats-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding: 0 5px;
+        }
+
+        .stats-header h2 {
+            margin: 0;
+            font-size: 1.2rem;
+            color: var(--primary);
+        }
+
+        .progress-text {
+            font-size: 0.9rem;
+            color: var(--text-light);
+            font-weight: bold;
+        }
+
+        /* Mağaza Kartları */
+        .store-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 12px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            border-left: 6px solid var(--secondary);
+            transition: all 0.3s ease;
+        }
+
+        .store-card.visited {
+            border-left-color: var(--success);
+            opacity: 0.8;
+            background-color: #fcfcfc;
+        }
+
+        .store-card.visited .store-number {
+            background-color: var(--success);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+
+        .store-info h3 {
+            margin: 0 0 5px 0;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            color: var(--primary);
+        }
+
+        .store-number {
+            background: var(--secondary);
+            color: white;
+            border-radius: 50%;
+            width: 26px;
+            height: 26px;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            margin-right: 10px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            flex-shrink: 0;
+            transition: background 0.3s;
+        }
+
+        .distance-badge {
+            background: #e8f4fd;
+            color: #3498db;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 5px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 10px;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            gap: 6px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .btn-nav {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .btn-nav:hover {
+            background-color: #1a252f;
+        }
+
+        .btn-visit {
+            background-color: transparent;
+            border: 2px solid #ddd;
+            color: var(--text-light);
+        }
+
+        .store-card.visited .btn-visit {
+            background-color: var(--success);
+            border-color: var(--success);
+            color: white;
+        }
+
+        /* Konum Uyarısı */
+        #location-alert {
+            display: none;
+            background: #fff3cd;
+            color: #856404;
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            text-align: center;
+            border: 1px solid #ffeeba;
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- Harita Konteyneri -->
+    <div id="map"></div>
+    
+    <!-- Harita Üzerindeki Kontroller -->
+    <div class="controls">
+        <button id="btn-locate" onclick="getUserLocation()">📍 Konumumu Bul</button>
+        <button class="btn-sort" id="btn-sort-distance" onclick="sortByDistance()" style="display:none;">↕️ Yakına Göre Sırala</button>
+        <button class="btn-route" onclick="createMultiRoute()">🗺️ Toplu Rota Çiz</button>
+        <button onclick="resetData()" style="background: #95a5a6;">🔄 Verileri Sıfırla</button>
+        <div id="gps-status" class="status">GPS Bekleniyor...</div>
+    </div>
+
+    <!-- Mağaza Listesi -->
+    <div class="list-container">
+        <div id="location-alert">Konum izni verilmedi. Mesafeler hesaplanamıyor.</div>
+        
+        <div class="stats-header">
+            <h2>Mağaza Listesi</h2>
+            <div class="progress-text">Durum: <span id="progress-count">0/34</span></div>
+        </div>
+
+        <div id="store-list">
+            <!-- JavaScript ile doldurulacak -->
+        </div>
+    </div>
+
+    <!-- Leaflet.js JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    
+    <script>
+        // --- 1. VERİ TANIMLAMALARI ---
+        let stores = [{"id": 1, "name": "YEŞİLOVA", "lat": 36.357839, "lon": 36.221326}, {"id": 2, "name": "SERİNYOL", "lat": 36.361454, "lon": 36.2144}, {"id": 3, "name": "ALKAN", "lat": 36.357444, "lon": 36.208944}, {"id": 4, "name": "ÜNİVERSİTE", "lat": 36.332955, "lon": 36.199809}, {"id": 5, "name": "DERİNCE", "lat": 36.307251, "lon": 36.195316}, {"id": 6, "name": "HALİL İBRAHİM TEKGÖZ", "lat": 36.285762, "lon": 36.190524}, {"id": 7, "name": "ODABAŞI", "lat": 36.258885, "lon": 36.180953}, {"id": 8, "name": "KUZEYTEPE", "lat": 36.256245, "lon": 36.171846}, {"id": 9, "name": "KIZILAY", "lat": 36.250005, "lon": 36.162328}, {"id": 10, "name": "EKİNCİ", "lat": 36.246394, "lon": 36.153538}, {"id": 11, "name": "OTOGAR", "lat": 36.235673, "lon": 36.134115}, {"id": 12, "name": "SERPİL KÖSE", "lat": 36.228306, "lon": 36.137306}, {"id": 13, "name": "AKSARAY", "lat": 36.213777, "lon": 36.141321}, {"id": 14, "name": "TÜRKMENBAŞI", "lat": 36.216252, "lon": 36.135217}, {"id": 15, "name": "KAHRAMAN", "lat": 36.221279, "lon": 36.132565}, {"id": 16, "name": "ADLİYE", "lat": 36.223442, "lon": 36.128017}, {"id": 17, "name": "GÜZELYAYLA", "lat": 36.211496, "lon": 36.118641}, {"id": 18, "name": "ÇEKMECE", "lat": 36.206439, "lon": 36.140033}, {"id": 19, "name": "KÖPRÜBAŞI", "lat": 36.208064, "lon": 36.126584}, {"id": 20, "name": "DEFNE", "lat": 36.19892, "lon": 36.12412}, {"id": 21, "name": "BALTACIK", "lat": 36.194087, "lon": 36.122382}, {"id": 22, "name": "AHMET MUSTAFA", "lat": 36.190731, "lon": 36.127151}, {"id": 23, "name": "MÜZE", "lat": 36.207741, "lon": 36.170471}, {"id": 24, "name": "ANTAKYA", "lat": 36.215942, "lon": 36.179565}, {"id": 25, "name": "Saint Pierre", "lat": 36.22739, "lon": 36.194611}, {"id": 26, "name": "AYŞENUR ALTAN", "lat": 36.230083, "lon": 36.202665}, {"id": 27, "name": "MENEKŞE", "lat": 36.233064, "lon": 36.198849}, {"id": 28, "name": "MUSTAFA ÖZDEMİR", "lat": 36.239334, "lon": 36.213627}, {"id": 29, "name": "HASTANE", "lat": 36.267774, "lon": 36.229673}, {"id": 30, "name": "FURKAN MERT GÜRLER", "lat": 36.250144, "lon": 36.197773}, {"id": 31, "name": "GÜZEL BURÇ", "lat": 36.247985, "lon": 36.185772}, {"id": 32, "name": "İL SAĞLIK", "lat": 36.24779, "lon": 36.177592}, {"id": 33, "name": "NECİP FAZIL", "lat": 36.228915, "lon": 36.164762}, {"id": 34, "name": "KAMPÜS", "lat": 36.328224, "lon": 36.203057}];
+        
+        // LocalStorage'dan ziyaret edilenleri çek
+        let visitedStores = JSON.parse(localStorage.getItem('visitedStores')) || [];
+        let userLocation = null;
+        let map;
+        let markers = [];
+        let routingLine = null;
+
+        // --- 2. HARİTA (LEAFLET) KURULUMU ---
+        function initMap() {
+            // Haritayı Hatay merkeze odakla
+            map = L.map('map').setView([36.214, 36.155], 11);
+            
+            // OpenStreetMap katmanı
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '© OpenStreetMap'
+            }).addTo(map);
+
+            updateMapMarkers();
+        }
+
+        // Haritaya Pin (Marker) Ekleme
+        function updateMapMarkers() {
+            // Eski markerları temizle
+            markers.forEach(m => map.removeLayer(m));
+            markers = [];
+
+            // Kırmızı Pin İkonu (Ziyaret Edilmemiş)
+            const redIcon = new L.Icon({
+                iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+                shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                iconSize: [25, 41],
+                iconAnchor: [12, 41],
+                popupAnchor: [1, -34],
+                shadowSize: [41, 41]
+            });
+
+            // Yeşil Pin İkonu (Ziyaret Edilmiş)
+            const greenIcon = new L.Icon({
+                iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
+                shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                iconSize: [25, 41],
+                iconAnchor: [12, 41],
+                popupAnchor: [1, -34],
+                shadowSize: [41, 41]
+            });
+
+            stores.forEach(store => {
+                let isVisited = visitedStores.includes(store.id);
+                let marker = L.marker([store.lat, store.lon], {
+                    icon: isVisited ? greenIcon : redIcon
+                }).bindPopup(`<b>${store.id}. ${store.name}</b><br>Durum: ${isVisited ? '✅ Ziyaret Edildi' : '❌ Bekliyor'}`);
+                
+                marker.addTo(map);
+                markers.push(marker);
+            });
+        }
+
+        // --- 3. GPS VE MESAFE İŞLEMLERİ ---
+        function getUserLocation() {
+            const statusEl = document.getElementById('gps-status');
+            statusEl.innerText = "Konum Aranıyor...";
+            
+            if ("geolocation" in navigator) {
+                navigator.geolocation.getCurrentPosition(
+                    position => {
+                        userLocation = {
+                            lat: position.coords.latitude,
+                            lon: position.coords.longitude
+                        };
+                        statusEl.innerText = "GPS Aktif ✅";
+                        document.getElementById('location-alert').style.display = 'none';
+                        document.getElementById('btn-sort-distance').style.display = 'flex';
+                        
+                        // Kullanıcı konumunu haritada göster
+                        L.circleMarker([userLocation.lat, userLocation.lon], {
+                            color: '#3498db',
+                            fillColor: '#3498db',
+                            fillOpacity: 0.8,
+                            radius: 8
+                        }).addTo(map).bindPopup("<b>Buradasınız</b>").openPopup();
+                        
+                        map.setView([userLocation.lat, userLocation.lon], 12);
+                        
+                        calculateDistances();
+                        renderList();
+                    },
+                    error => {
+                        console.error("GPS Hatası:", error);
+                        statusEl.innerText = "GPS Reddedildi ❌";
+                        document.getElementById('location-alert').style.display = 'block';
+                    },
+                    { enableHighAccuracy: true, timeout: 10000 }
+                );
+            } else {
+                statusEl.innerText = "GPS Desteklenmiyor";
+            }
+        }
+
+        // Haversine formülü ile kuş uçuşu mesafe hesaplama (km)
+        function getDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371; // Dünya yarıçapı (km)
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = 
+                Math.sin(dLat/2) * Math.sin(dLat/2) +
+                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+                Math.sin(dLon/2) * Math.sin(dLon/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return R * c;
+        }
+
+        function calculateDistances() {
+            if (!userLocation) return;
+            stores.forEach(store => {
+                store.distance = getDistance(userLocation.lat, userLocation.lon, store.lat, store.lon);
+            });
+        }
+
+        function sortByDistance() {
+            if (!userLocation) return;
+            stores.sort((a, b) => a.distance - b.distance);
+            // Sadece sırayı değiştirdik, ID numaraları aynı kalır
+            renderList();
+        }
+
+        // --- 4. GOOGLE MAPS ÇOKLU ROTA (WAYPOINTS) ---
+        function createMultiRoute() {
+            // Ziyaret edilmemiş olan ilk 9 mağazayı (Google Maps limitleri için) al
+            let unvisited = stores.filter(s => !visitedStores.includes(s.id));
+            if (unvisited.length === 0) {
+                alert("Tüm mağazalar zaten ziyaret edilmiş!");
+                return;
+            }
+            
+            let routeStores = unvisited.slice(0, Math.min(unvisited.length, 9));
+            
+            // Eğer konum varsa başlangıç noktası olarak kullan, yoksa ilk mağazayı al
+            let origin = userLocation ? `${userLocation.lat},${userLocation.lon}` : `${routeStores[0].lat},${routeStores[0].lon}`;
+            let destination = `${routeStores[routeStores.length-1].lat},${routeStores[routeStores.length-1].lon}`;
+            
+            let waypoints = "";
+            if (routeStores.length > 2 || (userLocation && routeStores.length > 1)) {
+                let wpArray = userLocation ? routeStores.slice(0, -1) : routeStores.slice(1, -1);
+                waypoints = "&waypoints=" + wpArray.map(s => `${s.lat},${s.lon}`).join('|');
+            }
+
+            let url = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}${waypoints}&travelmode=driving`;
+            window.open(url, '_blank');
+        }
+
+        // --- 5. LİSTE VE ZİYARET İŞLEMLERİ (LOCAL STORAGE) ---
+        function toggleVisit(storeId) {
+            let index = visitedStores.indexOf(storeId);
+            if (index > -1) {
+                visitedStores.splice(index, 1); // Ziyareti iptal et
+            } else {
+                visitedStores.push(storeId); // Ziyaret edildi işaretle
+            }
+            
+            // LocalStorage'a kaydet
+            localStorage.setItem('visitedStores', JSON.stringify(visitedStores));
+            
+            updateProgress();
+            renderList();
+            updateMapMarkers(); // Haritadaki pini de yeşile/kırmızıya çevir
+        }
+
+        function updateProgress() {
+            document.getElementById('progress-count').innerText = `${visitedStores.length} / ${stores.length}`;
+        }
+
+        function resetData() {
+            if(confirm("Tüm ziyaret verileri ve sıralama sıfırlanacak. Emin misiniz?")) {
+                localStorage.removeItem('visitedStores');
+                visitedStores = [];
+                // Sıralamayı orijinal id sırasına geri getir
+                stores.sort((a, b) => a.id - b.id);
+                updateProgress();
+                renderList();
+                updateMapMarkers();
+            }
+        }
+
+        function renderList() {
+            const container = document.getElementById('store-list');
+            container.innerHTML = ''; // Temizle
+
+            stores.forEach(store => {
+                let isVisited = visitedStores.includes(store.id);
+                
+                // Mesafe metni hazırlığı
+                let distanceHtml = '';
+                if (store.distance !== undefined) {
+                    let distText = store.distance < 1 ? `${(store.distance * 1000).toFixed(0)} m` : `${store.distance.toFixed(1)} km`;
+                    distanceHtml = `<span class="distance-badge">📏 ${distText}</span>`;
+                }
+
+                const card = document.createElement('div');
+                card.className = `store-card ${isVisited ? 'visited' : ''}`;
+
+                let mapsLink = `https://www.google.com/maps/search/?api=1&query=${store.lat},${store.lon}`;
+
+                card.innerHTML = `
+                    <div class="card-header">
+                        <div class="store-info">
+                            <h3><span class="store-number">${store.id}</span> ${store.name}</h3>
+                            ${distanceHtml}
+                        </div>
+                    </div>
+                    
+                    <div class="card-actions">
+                        <button onclick="toggleVisit(${store.id})" class="btn btn-visit">
+                            ${isVisited ? '✅ Ziyaret Edildi' : '⭕ Ziyaret Et'}
+                        </button>
+                        <a href="${mapsLink}" target="_blank" class="btn btn-nav">
+                            📍 Yönlendir
+                        </a>
+                    </div>
+                `;
+
+                container.appendChild(card);
+            });
+        }
+
+        // --- 6. BAŞLATMA ---
+        window.onload = function() {
+            updateProgress();
+            renderList();
+            initMap();
+        };
+
+    </script>
+</body>
+</html>
