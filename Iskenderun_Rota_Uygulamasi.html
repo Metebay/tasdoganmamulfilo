@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Saha Rota Uygulaması</title>
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #e74c3c;
+            --success: #2ecc71;
+            --bg-color: #f4f6f8;
+            --card-bg: #ffffff;
+            --text-main: #333;
+            --text-light: #7f8c8d;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 0;
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        #map {
+            height: 40vh; 
+            width: 100%;
+            z-index: 1;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        .controls {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            font-size: 0.9rem;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .controls button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: background 0.2s;
+        }
+        
+        .controls button.btn-locate {
+            background: #2980b9;
+        }
+
+        .controls button.btn-route {
+            background: #9b59b6;
+        }
+
+        .controls .status {
+            text-align: center;
+            font-weight: bold;
+            color: var(--secondary);
+            margin-top: 5px;
+            font-size: 0.8rem;
+        }
+
+        .list-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+            background: var(--bg-color);
+        }
+
+        .stats-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding: 0 5px;
+        }
+
+        .stats-header h2 {
+            margin: 0;
+            font-size: 1.2rem;
+            color: var(--primary);
+        }
+
+        .progress-text {
+            font-size: 0.9rem;
+            color: var(--text-light);
+            font-weight: bold;
+        }
+
+        .store-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 12px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            border-left: 6px solid var(--secondary);
+            transition: all 0.3s ease;
+        }
+
+        .store-card.visited {
+            border-left-color: var(--success);
+            opacity: 0.8;
+            background-color: #fcfcfc;
+        }
+
+        .store-card.visited .store-number {
+            background-color: var(--success);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+
+        .store-info h3 {
+            margin: 0 0 5px 0;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            color: var(--primary);
+        }
+
+        .store-number {
+            background: var(--secondary);
+            color: white;
+            border-radius: 50%;
+            width: 26px;
+            height: 26px;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            margin-right: 10px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 5px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 10px;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            gap: 6px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .btn-nav {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .btn-visit {
+            background-color: transparent;
+            border: 2px solid #ddd;
+            color: var(--text-light);
+        }
+
+        .store-card.visited .btn-visit {
+            background-color: var(--success);
+            border-color: var(--success);
+            color: white;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div id="map"></div>
+    
+    <div class="controls">
+        <button class="btn-locate" onclick="toggleTracking()">📍 Canlı Konumumu İzle</button>
+        <button class="btn-route" onclick="createMultiRoute()">🗺️ Kalanlara Rota Çiz</button>
+        <button onclick="resetData()" style="background: #95a5a6;">🔄 Sıfırla</button>
+        <div id="gps-status" class="status">GPS Kapalı</div>
+    </div>
+
+    <div class="list-container">
+        <div class="stats-header">
+            <h2>Mağaza Listesi</h2>
+            <div class="progress-text">Durum: <span id="progress-count">0/34</span></div>
+        </div>
+        <div id="store-list"></div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    
+    <script>
+        let stores = [{"id": 1, "name": "BELEN", "lat": 36.492423, "lon": 36.193661}, {"id": 2, "name": "CIRTIMAN", "lat": 36.509663, "lon": 36.177055}, {"id": 3, "name": "RAİFPAŞA", "lat": 36.553753, "lon": 36.13972}, {"id": 4, "name": "MUSTAFA KEMAL", "lat": 36.565406, "lon": 36.151102}, {"id": 5, "name": "MİMAR SİNAN", "lat": 36.56295, "lon": 36.151592}, {"id": 6, "name": "KÖRFEZ", "lat": 36.555429, "lon": 36.154581}, {"id": 7, "name": "ÖMER YILMAZ", "lat": 36.559892, "lon": 36.158301}, {"id": 8, "name": "NUMUNE", "lat": 36.567537, "lon": 36.159758}, {"id": 9, "name": "TOKİ", "lat": 36.561828, "lon": 36.198522}, {"id": 10, "name": "DR SADIK", "lat": 36.578724, "lon": 36.165226}, {"id": 11, "name": "ÇANKAYA", "lat": 36.577859, "lon": 36.167336}, {"id": 12, "name": "DUMLUPINAR", "lat": 36.582085, "lon": 36.172538}, {"id": 13, "name": "FİKRİYE TOLUYAĞ", "lat": 36.581734, "lon": 36.176682}, {"id": 14, "name": "ORGANİZE", "lat": 36.574964, "lon": 36.186551}, {"id": 15, "name": "MERCAN", "lat": 36.571756, "lon": 36.1931}, {"id": 16, "name": "SAKARYA", "lat": 36.575216, "lon": 36.193385}, {"id": 17, "name": "NAZLICAN ORUÇ", "lat": 36.576969, "lon": 36.201183}, {"id": 18, "name": "MODERNEVLER", "lat": 36.581238, "lon": 36.194458}, {"id": 19, "name": "PAŞAKÖY", "lat": 36.578716, "lon": 36.188678}, {"id": 20, "name": "5 TEMMUZ", "lat": 36.584091, "lon": 36.170086}, {"id": 21, "name": "ULUCAMİ", "lat": 36.586441, "lon": 36.173544}, {"id": 22, "name": "ŞEHİT PAMİR", "lat": 36.58589, "lon": 36.169729}, {"id": 23, "name": "SÜLEYMANİYE", "lat": 36.592587, "lon": 36.164249}, {"id": 24, "name": "PİRİREİS", "lat": 36.590485, "lon": 36.159676}, {"id": 25, "name": "FENER", "lat": 36.586394, "lon": 36.164411}, {"id": 26, "name": "ÖVÜNDÜK", "lat": 36.573436, "lon": 36.135855}, {"id": 27, "name": "KARAAĞAÇ", "lat": 36.552303, "lon": 36.11205}, {"id": 28, "name": "KARA HÜSEYİNLİ", "lat": 36.531351, "lon": 36.112581}, {"id": 29, "name": "GÜLEVLER", "lat": 36.530031, "lon": 36.149664}, {"id": 30, "name": "SARIMAZI", "lat": 36.510332, "lon": 36.17384}, {"id": 31, "name": "GEDİK", "lat": 36.4883, "lon": 36.222054}, {"id": 32, "name": "GÜMRÜK", "lat": 36.24148, "lon": 36.631128}];
+        let visitedStores = JSON.parse(localStorage.getItem('visitedStores')) || [];
+        let map;
+        let markers = [];
+        let userMarker = null;
+        let trackingId = null;
+        let isTracking = false;
+
+        function initMap() {
+            map = L.map('map').setView([36.214, 36.155], 11);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '© OpenStreetMap'
+            }).addTo(map);
+            updateMapMarkers();
+        }
+
+        function updateMapMarkers() {
+            markers.forEach(m => map.removeLayer(m));
+            markers = [];
+
+            const redIcon = new L.Icon({
+                iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+                shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41]
+            });
+
+            const greenIcon = new L.Icon({
+                iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
+                shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41]
+            });
+
+            stores.forEach(store => {
+                let isVisited = visitedStores.includes(store.id);
+                let marker = L.marker([store.lat, store.lon], {
+                    icon: isVisited ? greenIcon : redIcon
+                }).bindPopup(`<b>${store.id}. ${store.name}</b>`);
+                marker.addTo(map);
+                markers.push(marker);
+            });
+        }
+        
+        // GPS Takip Fonksiyonları
+        function toggleTracking() {
+            const statusEl = document.getElementById('gps-status');
+            const btnLocate = document.querySelector('.btn-locate');
+            
+            if (isTracking) {
+                if (trackingId !== null) navigator.geolocation.clearWatch(trackingId);
+                isTracking = false;
+                statusEl.innerText = "GPS Kapalı";
+                statusEl.style.color = "var(--secondary)";
+                btnLocate.innerText = "📍 Canlı Konumumu İzle";
+                btnLocate.style.background = "#2980b9";
+                if(userMarker) {
+                    map.removeLayer(userMarker);
+                    userMarker = null;
+                }
+            } else {
+                if ("geolocation" in navigator) {
+                    statusEl.innerText = "Konum Bulunuyor...";
+                    statusEl.style.color = "#f39c12";
+                    
+                    trackingId = navigator.geolocation.watchPosition(
+                        position => {
+                            let lat = position.coords.latitude;
+                            let lon = position.coords.longitude;
+                            
+                            if (!userMarker) {
+                                userMarker = L.circleMarker([lat, lon], {
+                                    color: '#3498db',
+                                    fillColor: '#3498db',
+                                    fillOpacity: 0.9,
+                                    radius: 8,
+                                    weight: 2
+                                }).addTo(map).bindPopup("<b>Siz Buradasınız</b>");
+                                map.setView([lat, lon], 14); // İlk buluşta yakınlaş
+                            } else {
+                                userMarker.setLatLng([lat, lon]);
+                            }
+                            
+                            isTracking = true;
+                            statusEl.innerText = "GPS İzleniyor ✅";
+                            statusEl.style.color = "var(--success)";
+                            btnLocate.innerText = "🛑 İzlemeyi Durdur";
+                            btnLocate.style.background = "#e74c3c";
+                        },
+                        error => {
+                            console.error("GPS Hatası:", error);
+                            statusEl.innerText = "GPS Hatası ❌";
+                            statusEl.style.color = "var(--secondary)";
+                            isTracking = false;
+                        },
+                        { enableHighAccuracy: true, maximumAge: 10000, timeout: 5000 }
+                    );
+                } else {
+                    alert("Cihazınızda GPS desteği bulunmuyor.");
+                }
+            }
+        }
+
+        // Doğrudan sıradaki mağazalara Google Maps rotası çizen fonksiyon (Sırayı hiç bozmadan)
+        function createMultiRoute() {
+            let unvisited = stores.filter(s => !visitedStores.includes(s.id));
+            if (unvisited.length === 0) {
+                alert("Tüm mağazalar zaten ziyaret edilmiş!");
+                return;
+            }
+            
+            // Sırayı koruyarak en fazla 10 nokta al (1 başlangıç, 8 ara, 1 bitiş)
+            let routeStores = unvisited.slice(0, Math.min(unvisited.length, 10));
+            
+            let origin = `${routeStores[0].lat},${routeStores[0].lon}`;
+            let destination = `${routeStores[routeStores.length-1].lat},${routeStores[routeStores.length-1].lon}`;
+            
+            let waypoints = "";
+            if (routeStores.length > 2) {
+                let wpArray = routeStores.slice(1, -1);
+                waypoints = "&waypoints=" + wpArray.map(s => `${s.lat},${s.lon}`).join('|');
+            }
+
+            let url = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}${waypoints}&travelmode=driving`;
+            window.open(url, '_blank');
+        }
+
+        function toggleVisit(storeId) {
+            let index = visitedStores.indexOf(storeId);
+            if (index > -1) {
+                visitedStores.splice(index, 1);
+            } else {
+                visitedStores.push(storeId);
+            }
+            localStorage.setItem('visitedStores', JSON.stringify(visitedStores));
+            updateProgress();
+            renderList();
+            updateMapMarkers();
+        }
+
+        function updateProgress() {
+            document.getElementById('progress-count').innerText = `${visitedStores.length} / ${stores.length}`;
+        }
+
+        function resetData() {
+            if(confirm("Tüm ziyaret verileri sıfırlanacak. Emin misiniz?")) {
+                localStorage.removeItem('visitedStores');
+                visitedStores = [];
+                updateProgress();
+                renderList();
+                updateMapMarkers();
+            }
+        }
+
+        function renderList() {
+            const container = document.getElementById('store-list');
+            container.innerHTML = ''; 
+
+            stores.forEach(store => {
+                let isVisited = visitedStores.includes(store.id);
+                
+                const card = document.createElement('div');
+                card.className = `store-card ${isVisited ? 'visited' : ''}`;
+                let mapsLink = `https://www.google.com/maps/search/?api=1&query=${store.lat},${store.lon}`;
+
+                card.innerHTML = `
+                    <div class="card-header">
+                        <div class="store-info">
+                            <h3><span class="store-number">${store.id}</span> ${store.name}</h3>
+                        </div>
+                    </div>
+                    
+                    <div class="card-actions">
+                        <button onclick="toggleVisit(${store.id})" class="btn btn-visit">
+                            ${isVisited ? '✅ Ziyaret Edildi' : '⭕ Ziyaret Et'}
+                        </button>
+                        <a href="${mapsLink}" target="_blank" class="btn btn-nav">
+                            📍 Konuma Git
+                        </a>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        window.onload = function() {
+            updateProgress();
+            renderList();
+            initMap();
+        };
+    </script>
+</body>
+</html>
